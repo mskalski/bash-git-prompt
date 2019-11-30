@@ -1,25 +1,25 @@
 ##############################################################################
-# Changes the prompt to a Debian-style one that truncates pwd to a max length
-# depending on the terminal column width. Also uses the prompt_callback
-# function of bash-git-prompt to set the window title to almost the same
-# Debian-style.
+# Theme adds tty name and full datetime to prompt and also have last 
+# command status, error code is displayed only for errors >=2
 #
-# The prompt will use a Debian-style on the form
+# Also sets window title to contain debian-based title (user@host: workdir),
+# and additionally tty name, HH:MM time, error marker and also DayTime marker
+# (day/night) -- for signalling workaholics it's time go home :-)
 #
-# [user@host: <truncated PWD>] [bash-git-prompt-info] <exit status>
-# HH:MM $
+# Samples:
 #
-# The window title will have the form
-# user@host: <truncated PWD>
+# Prompt:
+# -------
 #
-# Example usage:
-# if [ -f ~/.bash-git-prompt/gitprompt.sh ]; then
-#   GIT_PROMPT_THEME=TruncatedPwd_WindowTitle
-#   source ~/.bash-git-prompt/gitprompt.sh
-# fi
+# [2018-10-31 12:09:10] ~/.bash-git-prompt [master (origin/master)| ✚1 …1]
+# user@host ➜pts/27 [✔] $ 
 #
-# oGre <oGre@muppfarmen.se> [https://github.com/ogr3]
+# Window title:
+# -------------
+# ✘12:09 🌞 user@host:~/.bash-git-prompt ➜pts/27
+#
 ##############################################################################
+
 override_git_prompt_colors() {
   GIT_PROMPT_THEME_NAME="mskalski_WindowTitle"
 
@@ -42,29 +42,37 @@ override_git_prompt_colors() {
       #TimeColor="${BrightBlue}"
     fi
     
+    # [WiP] to make TimeMarker work in regular prompt
     #local gp_time="${TimeColor}[${TimeMarkerColor}${TimeMarker} ${TimeColor}${TimeFull}]"
     
     #GIT_PROMPT_START_USER="\\n${gp_time} ${BrightCyan}${PathShort}"
     #GIT_PROMPT_START_ROOT="\\n${gp_time} ${BrightYellow}${PathShort}"
 
     local Title="${Time12a} ${TimeMarker} \u@\h:$(gp_truncate_pwd) ➜$TTYName"
-
+    
     if [ "${GIT_PROMPT_LAST_COMMAND_STATE:-0}" != 0 ]; then
       Title="✘$Title"
     fi
 
     gp_set_window_title "$Title"
-    
-    echo "prompt_callback: BASHPID: $BASHPID" 1>&2
-    
-    echo ' [XXXX] '
   }
-
+  
+  function _filter_error_status {
+    status=$?
+    
+    [ $# -gt 0 ] && status="$1"
+    
+    case "$status" in
+      0|1) ;;
+      *) echo -$status;;
+    esac
+  }
+  
   # Full time 
   TimeFull="\$(date +'%Y-%m-%d %H:%M:%S')"
   TTYName="\$(tty | sed 's:^/dev/::')"
 
-  local gp_time="${ColorTime}[${TimeFull}]"
+  local gp_time="${BoldBlue}[${TimeFull}]"
   local gp_user_prompt='\$'
 
   GIT_PROMPT_CLEAN=" ${BoldGreen}✔"
@@ -82,17 +90,14 @@ override_git_prompt_colors() {
   GIT_PROMPT_UPSTREAM=" {${BoldBlue}_UPSTREAM_${ResetColor}}"
   #GIT_UPSTREAM_PRIVATE=''
 
-  ColorError=${Red}
-  ColorUserPrompt="${ColorError}"
   GIT_PROMPT_COMMAND_OK="${Green}[✔]"
-  GIT_PROMPT_COMMAND_FAIL="${ColorError}[✘]"
+  GIT_PROMPT_COMMAND_FAIL="${Red}[✘\$(_filter_error_status \${GIT_PROMPT_LAST_COMMAND_STATE})]"
 
-  echo 'Setting GIT_PROMPT_START_USER...' 1>&2
-  GIT_PROMPT_START_USER="\n${gp_time} ${BrightCyan}${PathShort}"
-  GIT_PROMPT_START_ROOT="\n${gp_time} ${BrightYellow}${PathShort}"
+  GIT_PROMPT_START_USER="\\n${gp_time} ${BrightCyan}${PathShort}"
+  GIT_PROMPT_START_ROOT="\\n${gp_time} ${BrightYellow}${PathShort}"
 
-  GIT_PROMPT_END_USER="\\n${BrightGreen}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ColorUserPrompt}${gp_user_prompt}${ResetColor} "
-  GIT_PROMPT_END_ROOT="\\n${BrightRed}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ColorUserPrompt}${gp_user_prompt}${ResetColor} "
+  GIT_PROMPT_END_USER="\\n${BrightGreen}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
+  GIT_PROMPT_END_ROOT="\\n${BrightRed}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
 
   #GIT_PROMPT_LEADING_SPACE=1
   GIT_PROMPT_PREFIX="${Cyan}["
