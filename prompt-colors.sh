@@ -69,10 +69,13 @@ define_color_names() {
 
   _def_color IntenseBlack 0 90
   _def_color ResetColor   0 0
+  
+  _def_color BoldColor    ${AttrBright}
+  _def_color DimColor     ${AttrDim}
 
 }
 
 # do the color definitions only once
-if [[ -z "${ColorNames+x}" || "${#ColorNames[*]}" = 0 || -z "${IntenseBlack:+x}" || -z "${ResetColor:+x}" ]]; then
+if [[ -z "${ColorNames+x}" || "${#ColorNames[*]}" = 0 || -z "${IntenseBlack:+x}" || -z "${ResetColor:+x}" || -z "${BoldColor:+x}"  || -z "${DimColor:+x}" ]]; then
   define_color_names
 fi
