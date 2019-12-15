@@ -108,6 +108,7 @@ while IFS='' read -r line || [[ -n "${line}" ]]; do
       ?D) ((num_changed++)) ;;
       ?\ ) ;;
       #single character matches, second loop
+      D) ((num_changed++)) ;;
       U) ((num_conflicts++)) ;;
       \ ) ;;
       *) ((num_staged++)) ;;
