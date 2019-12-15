@@ -1,0 +1,130 @@
+##############################################################################
+# Theme adds tty name and full datetime to prompt and also have last 
+# command status, error code is displayed only for errors >=2
+#
+# Also sets window title to contain debian-based title (user@host: workdir),
+# and additionally tty name, HH:MM time, error marker and also DayTime marker
+# (day/night) -- for signalling workaholics it's time go home :-)
+#
+# Samples:
+#
+# Prompt:
+# -------
+#
+# [2018-10-31 12:09:10] ~/.bash-git-prompt [master (origin/master)| ✚1 …1]
+# user@host ➜pts/27 [✔] $ 
+#
+# Window title:
+# -------------
+# ✘12:09 🌞 user@host:~/.bash-git-prompt ➜pts/27
+#
+##############################################################################
+
+override_git_prompt_colors() {
+  GIT_PROMPT_THEME_NAME="mskalski_WindowTitle"
+
+  #Overrides the prompt_callback function used by bash-git-prompt
+  function prompt_callback {
+
+    local hour=`date '+%H'`
+    local TimeMarker
+    #local TimeColor
+    #local TimeMarkerColor
+
+    # Setup Time marker and colors to be different on night and day
+    if [ $hour -lt 8 -o $hour -ge 17 ]; then
+      TimeMarker='🌚'
+      #TimeMarkerColor="${BrightBlue}"
+      #TimeColor="${Magenta}"
+    else
+      TimeMarker='🌞'
+      #TimeMarkerColor="${Yellow}"
+      #TimeColor="${BrightBlue}"
+    fi
+    
+    # [WiP] to make TimeMarker work in regular prompt
+    #local gp_time="${TimeColor}[${TimeMarkerColor}${TimeMarker} ${TimeColor}${TimeFull}]"
+    
+    #GIT_PROMPT_START_USER="\\n${gp_time} ${BrightCyan}${PathShort}"
+    #GIT_PROMPT_START_ROOT="\\n${gp_time} ${BrightYellow}${PathShort}"
+
+    local Title="${Time12a} ${TimeMarker} \u@\h:$(gp_truncate_pwd) ➜$TTYName"
+    
+    if [ "${GIT_PROMPT_LAST_COMMAND_STATE:-0}" != 0 ]; then
+      Title="✘$Title"
+    fi
+
+    gp_set_window_title "$Title"
+    
+    #echo "[e: $BASHPID]" 1>&2
+    #echo "[o: $BASHPID]"
+  }
+  
+  function _filter_error_status {
+    status=$?
+    
+    [ $# -gt 0 ] && status="$1"
+    
+    case "$status" in
+      0|1) ;;
+      *) echo -$status;;
+    esac
+  }
+  
+  # Full time 
+  TimeFull="\$(date +'%Y-%m-%d %H:%M:%S')"
+  TTYName="\$(tty | sed 's:^/dev/::')"
+
+  local gp_time="${BoldBlue}[${TimeFull}]"
+  local gp_user_prompt='\$'
+
+  GIT_PROMPT_CLEAN=" ${BoldGreen}✔"
+  GIT_PROMPT_STAGED=" ${BrightYellow}❖" # the number of staged files/directories
+  GIT_PROMPT_STASHED=" ${BoldMagenta}⚑" # the number of stashed files
+  GIT_PROMPT_CONFLICTS=" ${Red}✖"       # the number of files in conflict
+  GIT_PROMPT_CHANGED=" ${BoldBlue}✚"    # the number of changed files
+  GIT_PROMPT_UNTRACKED=" ${DimWhite}…"  # the number of untracked files
+
+  GIT_PROMPT_REMOTE=""
+  # the git branch that is active in the current directory
+  GIT_PROMPT_BRANCH="${Magenta}"
+  # used if the git branch that is active in the current directory is $GIT_PROMPT_MASTER_BRANCHES
+  GIT_PROMPT_MASTER_BRANCH="${BoldGreen}"
+  GIT_PROMPT_UPSTREAM=" {${BoldBlue}_UPSTREAM_${ResetColor}}"
+  #GIT_UPSTREAM_PRIVATE=''
+
+  GIT_PROMPT_COMMAND_OK="${Green}[✔]"
+  GIT_PROMPT_COMMAND_FAIL="${Red}[✘\$(_filter_error_status \${GIT_PROMPT_LAST_COMMAND_STATE})]"
+
+  GIT_PROMPT_START_USER="\\n${gp_time} ${BrightCyan}${PathShort}"
+  GIT_PROMPT_START_ROOT="\\n${gp_time} ${BrightYellow}${PathShort}"
+
+  GIT_PROMPT_END_USER="\\n${BrightGreen}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
+  GIT_PROMPT_END_ROOT="\\n${BrightRed}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
+
+  #GIT_PROMPT_LEADING_SPACE=1
+  GIT_PROMPT_PREFIX="${Cyan}["
+  GIT_PROMPT_SUFFIX="${Cyan}]"
+  GIT_PROMPT_SYMBOLS_AHEAD="${BrightGreen} ▲"  # The symbol for "n versions ahead of origin"
+  GIT_PROMPT_SYMBOLS_BEHIND="${BrightRed} ▼"   # The symbol for "n versions behind of origin"
+  GIT_PROMPT_SYMBOLS_PREHASH="${Yellow}:"     # Written before hash of commit, if no name could be found
+  GIT_PROMPT_SYMBOLS_NO_REMOTE_TRACKING="${BrightYellow}✳"
+
+}
+
+reload_git_prompt_colors "mskalski_WindowTitle"
+
+# Useful Unicode characters
+# Checkmarks: ✓✔ ✕✖✗✘ ❓❔ ❌✅
+# Emoticons:  ☹☺☻♉☆☠
+# Sun:        ☀☼⛅⛯🌞🌣🌣🌤🌅🌄⛭⛯⛮
+# Moon:       ☾☽🌝🌜🌛🌚🌙🌘🌗🌖🌕🌔🌓🌒🌑
+# Stars:      ❖✪✱✲✳✶✼✻✽✾✿ 🌠🌟
+# Weather:    🌥🌦🌧🌨🌩🌪🌢🌡⛈
+# Shapes:     ⭕⬬⬭⬮⬯⬤⯄⯃⯂⯁⯀⬩⬨⬧⬦⬥⭐⛬⛚⛶⛾⏰⏱⏲⏳⭘⭙⭗⭖⭕⬬⬭⬮⬯⬤●
+# Arrows:     ↓↑🡡🡣🡢🡠🡑🡐🡒🡓🡔🡕🡖🡗🡘🡙🡤🡥🡦🡧🡨🡩🡪🡫🡬🡭🡮🡯🡰🡱🡲🡳🡴🡵🡶🡷🡸🡹🡺🡻🡼🡽🡾🡿🢀🢁🢂🢃🢄🢅🢆🢇🢘🢙🢚🢛
+# Arrows2:    ➤➜⤇⤆⟵⟵⟶⟷⟸⟹⬎⬏⬆⬇⬅⬍⬌⬋⬊⬉⬈⭠⭡⭢⭣⭤⭥⭦⭧⭨⭩⭰⭱⭲⭳⯇⯈⯆⯅
+# Arrows3:    ⮜⮝⮞⮟⬎⬏⬐⬑⮕⮨⮩⮬⮭⮮⮯⮨⮩⮪⮫⮠⮡⮢⮣⮤⮥⮦⮧◢◣◤◥●◐◑◒◓◔◕◖◗◄►▲▼◀▶⏩⏪⏫⏬⏭⏮⏯⏴⏵⏶⏷⏸⏹⏺
+# Others:     ▕⦁⦂⦙➕⮾⮿⮉⮋⮈⮊⮀⮁⮂⮃⮄⮅⮆⮇'
+#
+# EOF
