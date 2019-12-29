@@ -74,6 +74,8 @@ override_git_prompt_colors() {
   # Full time 
   TimeFull="\$(date +'%Y-%m-%d %H:%M:%S')"
   TTYName="\$(tty | sed 's:^/dev/::')"
+  #HostName='\h'
+  HostName=${HOSTNAME:-`hostname`}
 
   local gp_time="${BoldBlue}[${TimeFull}]"
   local gp_user_prompt='\$'
@@ -99,8 +101,8 @@ override_git_prompt_colors() {
   GIT_PROMPT_START_USER="\\n${gp_time} ${BrightCyan}${PathShort}"
   GIT_PROMPT_START_ROOT="\\n${gp_time} ${BrightYellow}${PathShort}"
 
-  GIT_PROMPT_END_USER="\\n${BrightGreen}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
-  GIT_PROMPT_END_ROOT="\\n${BrightRed}\\u@\\h ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
+  GIT_PROMPT_END_USER="\\n${BrightGreen}\\u@${HostName} ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
+  GIT_PROMPT_END_ROOT="\\n${BrightRed}\\u@${HostName} ${Yellow}➜${TTYName} _LAST_COMMAND_INDICATOR_ ${ResetColor}${gp_user_prompt}${ResetColor} "
 
   #GIT_PROMPT_LEADING_SPACE=1
   GIT_PROMPT_PREFIX="${Cyan}["
